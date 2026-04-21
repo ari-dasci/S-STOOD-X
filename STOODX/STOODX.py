@@ -1,6 +1,5 @@
 import torch
 import pandas as pd
-from baycomp import two_on_multiple
 from STOODX.featureStractor import FeatureStractor
 from typing import Callable
 from scipy import stats
@@ -19,22 +18,21 @@ class STOODX:
         The distance function to use betwen the validation features and the test features. It must be a function that takes two torch.Tensors 
         and returns a torch.Tensor of shape (1,).
     ''' 
-    def __init__(self, model:FeatureStractor,
-                 distance:Callable = lambda x,y:torch.norm(x-y,dim=1),
-                 k_neighbors:int = 50,
-                 k_NNs:int = 50,
-                 quantile:float = 0.99,
-                 whole_test:bool = True,
-                 ):
-        self.model          = model
-        self.distance       = distance
-        self.k_neighbors    = k_neighbors
-        self.k_NNs          = k_NNs
-        self.quantile       = quantile
-        self.whole_test     = whole_test
-        
-        self.feats          = None
-        self.classes        = None
+    def __init__(self, model: FeatureStractor,
+                 distance: Callable = lambda x, y: torch.norm(x - y, dim=1),
+                 k_neighbors: int = 50,
+                 k_NNs: int = 50,
+                 quantile: float = 0.99,
+                 whole_test: bool = True):
+        self.model = model
+        self.distance = distance
+        self.k_neighbors = k_neighbors
+        self.k_NNs = k_NNs
+        self.quantile = quantile
+        self.whole_test = whole_test
+
+        self.feats = None
+        self.classes = None
         self.feats_list = []
         self.classes_list = []
 
@@ -204,31 +202,25 @@ class STOODX:
 
         """
 
-        x_features  = self.features(x.unsqueeze(0)).squeeze(0).detach().flatten()
-        x_class     = torch.argmax(self.model(x.unsqueeze(0)).squeeze(0),dim=0)
+        x_features = self.features(x.unsqueeze(0)).squeeze(0).detach().flatten()
+        x_class = torch.argmax(self.model(x.unsqueeze(0)).squeeze(0), dim=0)
 
         if intraclass:
             feat_subset = self.feats[self.classes == x_class]
         else:
             feat_subset = self.feats
 
-        sum_abs_features = torch.sum(torch.abs(feat_subset),dim=0)
+        sum_abs_features = torch.sum(torch.abs(feat_subset), dim=0)
 
-        
-        Quantil = torch.quantile(sum_abs_features,self.quantile).item()
+        quantile_value = torch.quantile(sum_abs_features, self.quantile).item()
+        n_features = torch.sum(sum_abs_features >= quantile_value).item()
 
-        n_features = torch.sum(sum_abs_features >= Quantil).item()
+        least_present_idx = torch.argsort(sum_abs_features, descending=True)[n_features:]
 
-        # Guardar n_features en un archivo de logs llamado n_features.log
-        # with open(f"XAI_features/features_NN{self.k_neighbors}.log","a") as f:
-        #    f.write(f"len()={len(sum_abs_features)} min()={torch.min(sum_abs_features).item()} max()={torch.max(sum_abs_features)} Selected={n_features}\n")
-        least_present_idx = torch.argsort(sum_abs_features,descending=True)[n_features:]
-
-        feat_subset[:,least_present_idx] = 0
-
+        feat_subset[:, least_present_idx] = 0
         x_features[least_present_idx] = 0
 
-        x_distances = self.distance(x_features,feat_subset)
+        x_distances = self.distance(x_features, feat_subset)
         
         if self.k_neighbors == -1:
             sorted_x_distances_idx = torch.argsort(x_distances)
@@ -243,41 +235,38 @@ class STOODX:
                 feat_subset[sorted_x_distances_idx[i]], feat_subset
             )
 
-        df_p_values = pd.DataFrame(columns=["p_value"],index= range(len(sorted_x_distances_idx)))
-        distances_top_ks = torch.sort(distances_knns, dim=0).values[0 : len(sorted_x_distances_idx)]
+        df_p_values = pd.DataFrame(columns=["p_value"], index=range(len(sorted_x_distances_idx)))
+        distances_top_ks = torch.sort(distances_knns, dim=0).values[0:len(sorted_x_distances_idx)]
 
         x_distances = x_distances[sorted_x_distances_idx][:len(sorted_x_distances_idx)].detach().cpu().numpy()
 
         for i in range(len(sorted_x_distances_idx[:self.k_NNs])):
-            distances_i = distances_top_ks[:,i].detach().cpu().numpy()
-            # rope = torch.quantile(distances_i, self.quantile).item() - torch.quantile(distances_i, 1-self.quantile).item()
+            distances_i = distances_top_ks[:, i].detach().cpu().numpy()
 
             if self.whole_test:
                 if np.sum(np.abs(x_distances - distances_i)) > 0:
-                    bayes_test = stats.wilcoxon(
-                        x_distances, 
+                    wilcoxon_test = stats.wilcoxon(
+                        x_distances,
                         distances_i,
                         alternative="greater",
                         nan_policy="omit",
                     )
                 else:
-                    # Devuelve un bayes test ficticio para que no de error
-                    # con un p_valor de 1
-                    
-                    bayes_test = stats.wilcoxon(
-                        x_distances, 
-                        distances_i+1,
+                    # Returns a dummy wilcoxon test with p_value of 1
+                    # when distances are identical to avoid errors
+                    wilcoxon_test = stats.wilcoxon(
+                        x_distances,
+                        distances_i + 1,
                         alternative="greater",
                         nan_policy="omit",
                     )
-                    
             else:
-                bayes_test = stats.wilcoxon(
-                    x_distances-distances_i,
+                wilcoxon_test = stats.wilcoxon(
+                    x_distances - distances_i,
                     alternative="greater",
                     nan_policy="omit",
                 )
 
-            df_p_values.iloc[i] = bayes_test.pvalue
+            df_p_values.iloc[i] = wilcoxon_test.pvalue
 
         return df_p_values
