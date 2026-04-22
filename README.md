@@ -28,12 +28,13 @@ STOOD-X is a **two-stage post-hoc OOD detection methodology** that combines:
 
 This repository implements the methodology described in:
 
-> **STOOD-X Methodology: Using Statistical Nonparametric Test for OOD Detection in Large-Scale Datasets Enhanced with Explainability**  
+> **STOOD-X: Explainable out-of-distribution detection via nonparametric statistical testing on large-scale datasets**  
 > Iván Sevillano-García, Julián Luengo, Francisco Herrera  
 > *University of Granada, Spain*  
-> arXiv:2504.02685, April 2025
+> Pattern Recognition, Vol. 177, 2026, Article 113254
 
 **Links:**
+- [📄 Pattern Recognition (Official Publication)](https://doi.org/10.1016/j.patcog.2026.113254)
 - [📄 arXiv Abstract](https://arxiv.org/abs/2504.02685)
 - [📄 arXiv HTML Version](https://arxiv.org/html/2504.02685v1)
 
@@ -156,11 +157,15 @@ STOOD-X achieves competitive performance on standard OOD detection benchmarks:
 If you use this code in your research, please cite our paper:
 
 ```bibtex
-@article{sevillano2025stoodx,
-  title={STOOD-X Methodology: Using Statistical Nonparametric Test for OOD Detection in Large-Scale Datasets Enhanced with Explainability},
+@article{sevillano2026stoodx,
+  title={STOOD-X: Explainable out-of-distribution detection via nonparametric statistical testing on large-scale datasets},
   author={Sevillano-Garc{\'i}a, Iv{\'a}n and Luengo, Juli{\'a}n and Herrera, Francisco},
-  journal={arXiv preprint arXiv:2504.02685},
-  year={2025}
+  journal={Pattern Recognition},
+  volume={177},
+  pages={113254},
+  year={2026},
+  publisher={Elsevier},
+  doi={10.1016/j.patcog.2026.113254}
 }
 ```
 
