@@ -4,7 +4,7 @@ from zennit.canonizers import SequentialMergeBatchNorm
 from crp.attribution import CondAttribution
 from crp.concepts import ChannelConcept
 
-from STOODX.STOODXPostprocessor import STOODXPostprocessor
+from ._openood_adapter.postprocessor import STOODXPostprocessor
 class FeatureExplanation(torch.nn.Module):
 
     def __init__(self, net: torch.nn.Module, stoodx_postprocessor: STOODXPostprocessor, dataset):

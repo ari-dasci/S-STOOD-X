@@ -13,7 +13,7 @@ from openood.networks.regnet_y_16gf import RegNet_Y_16GF
 
 import pandas as pd
 
-from STOODX.STOODXPostprocessor import STOODXPostprocessor
+from STOODX._openood_adapter.postprocessor import STOODXPostprocessor
 import torchvision
 
 

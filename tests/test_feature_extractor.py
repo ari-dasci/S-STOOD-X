@@ -1,7 +1,7 @@
 import pytest
 import torch
 import torchvision
-from STOODX.featureStractor import FeatureStractor
+from STOODX.feature_extractor import FeatureExtractor
 
 
 @pytest.mark.parametrize(
@@ -23,9 +23,9 @@ def test_models(model_name:str,weights:str,feature_name:str,relative:bool):
         
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = torchvision.models.__dict__[model_name](weights=weights).to(device)
-    feature_estractor = FeatureStractor(model = model, device=device, feature_name=feature_name,atribut=False,relative=relative)
-    activations = feature_estractor.feature_activations(torch.randn(1,3,input_dimension,input_dimension))
-    relevances = feature_estractor.atribute(torch.randn(1,3,input_dimension,input_dimension))
+    feature_extractor = FeatureExtractor(model = model, device=device, feature_name=feature_name,atribut=False,relative=relative)
+    activations = feature_extractor.feature_activations(torch.randn(1,3,input_dimension,input_dimension))
+    relevances = feature_extractor.atribute(torch.randn(1,3,input_dimension,input_dimension))
     print(activations)
     print(relevances)
     print(activations.shape)

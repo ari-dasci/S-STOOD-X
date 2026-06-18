@@ -103,11 +103,11 @@ Or, to pin it persistently in a local (uncommitted) `pyproject.toml`:
 
 - **`pytest` collection currently fails on 5 modules.** Running
   `uv run pytest --collect-only` raises collection errors for
-  `tests/test_featureVisualization.py`,
-  `tests/test_postProcessor_cifar10.py`,
-  `tests/test_postProcessor_cifar100.py`,
-  `tests/test_postProcessor_imagenet.py`, and
-  `tests/test_postProcessor_imagenet200.py`.
+  `tests/test_feature_visualization.py`,
+  `tests/_openood_adapter/test_postProcessor_cifar10.py`,
+  `tests/_openood_adapter/test_postProcessor_cifar100.py`,
+  `tests/_openood_adapter/test_postProcessor_imagenet.py`, and
+  `tests/_openood_adapter/test_postProcessor_imagenet200.py`.
   Root cause: `imgaug` (pulled in transitively by the pinned `openood`
   dependency through its `draem_preprocessor`) uses `numpy.sctypes`, which was
   removed in NumPy 2.0. STOOD-X pins `numpy>=2.1.2`, and `imgaug` is
@@ -123,10 +123,10 @@ Or, to pin it persistently in a local (uncommitted) `pyproject.toml`:
 
 ```python
 import torch
-from STOODX import STOODX, FeatureStractor
+from STOODX import STOODX, FeatureExtractor
 
 # Initialize your model and feature extractor
-model = FeatureStractor(
+model = FeatureExtractor(
     model=your_torch_model,
     device=torch.device("cuda" if torch.cuda.is_available() else "cpu"),
     feature_name="layer4",
@@ -166,15 +166,21 @@ print(f"Mean p-value: {result['p_value'].mean():.4f}")
 
 ```
 S-STOOD-X/
-├── STOODX/                      # Core library
-│   ├── STOODX.py               # Main STOOD-X implementation
-│   ├── STOODXPostprocessor.py  # Post-processor for OpenOOD integration
-│   ├── featureStractor.py      # Feature extraction utilities
-│   └── featureVisualization.py # Visualization and explainability
+├── src/
+│   └── STOODX/                   # Core library
+│       ├── __init__.py           # Public API: STOODX, FeatureExtractor
+│       ├── stoodx.py             # Main STOOD-X implementation
+│       ├── feature_extractor.py  # Feature extraction (FeatureExtractor)
+│       ├── feature_visualization.py  # Visualization and explainability
+│       └── _openood_adapter/     # Internal OpenOOD adapter (private)
+│           └── postprocessor.py  # STOODXPostprocessor for OpenOOD integration
 ├── configs/                     # Configuration files
 │   └── postprocessors/         # Post-processor configs
 ├── data/                        # Data and benchmark lists
 ├── tests/                       # Unit tests
+│   ├── test_feature_extractor.py
+│   ├── test_feature_visualization.py
+│   └── _openood_adapter/        # OpenOOD-adapter integration tests
 ├── results/                     # Experimental results
 ├── pretrained_models/           # Pretrained model storage
 ├── README.md                    # This file

@@ -13,7 +13,7 @@ from openood.networks.regnet_y_16gf import RegNet_Y_16GF
 
 import pandas as pd
 
-from STOODX.STOODXPostprocessor import STOODXPostprocessor
+from STOODX._openood_adapter.postprocessor import STOODXPostprocessor
 import torchvision
 
 
@@ -30,17 +30,25 @@ def convert_numpy_to_list(obj):
         return obj
 
 
-num_classes = {"cifar10":10, "cifar100":100, "imagenet200":200,"imagenet":1000}
+num_classes = {"cifar10": 10, "cifar100": 100, "imagenet200": 200, "imagenet": 1000}
 
-dists = {"cosine":lambda x,y:1 - torch.cosine_similarity(x, y,dim=1), 
-        "normCosine":lambda x,y: (1-torch.cosine_similarity(x, y,dim=1))*(torch.min(torch.norm(x,dim=1),torch.norm(y,dim=1)))/torch.max(torch.norm(x,dim=1),torch.norm(y,dim=1))}
-statistics = {"min":lambda x:x["p_value"].min(),"max":lambda x:x["p_value"].max(),
-              "mean":lambda x:x["p_value"].mean(),"median":lambda x:x["p_value"].median(),
-              "first":lambda x:x["p_value"].iloc[0],
-              "last":lambda x:x["p_value"].iloc[-1]}
+dists = {
+    "cosine": lambda x, y: 1 - torch.cosine_similarity(x, y, dim=1),
+    "normCosine": lambda x, y: (1 - torch.cosine_similarity(x, y, dim=1))
+    * (torch.min(torch.norm(x, dim=1), torch.norm(y, dim=1)))
+    / torch.max(torch.norm(x, dim=1), torch.norm(y, dim=1)),
+}
+statistics = {
+    "min": lambda x: x["p_value"].min(),
+    "max": lambda x: x["p_value"].max(),
+    "mean": lambda x: x["p_value"].mean(),
+    "median": lambda x: x["p_value"].median(),
+    "first": lambda x: x["p_value"].iloc[0],
+    "last": lambda x: x["p_value"].iloc[-1],
+}
 
 
-@pytest.mark.parametrize("id_set", ["cifar10"])
+@pytest.mark.parametrize("id_set", ["cifar100"])
 @pytest.mark.parametrize("atribut", [False])
 @pytest.mark.parametrize("relative", [False])
 @pytest.mark.parametrize("fsood", ["ood"])
@@ -49,7 +57,7 @@ statistics = {"min":lambda x:x["p_value"].min(),"max":lambda x:x["p_value"].max(
     [
         [
             "resnet18",
-            "./pretrained_models/cifar10_resnet18_32x32_base_e100_lr0.1_default/s0/best.ckpt",
+            "./pretrained_models/cifar100_resnet18_32x32_base_e100_lr0.1_default/s0/best.ckpt",
             "avgpool",
         ],
     ],
@@ -65,9 +73,9 @@ statistics = {"min":lambda x:x["p_value"].min(),"max":lambda x:x["p_value"].max(
 @pytest.mark.parametrize("p_value_statistic", ["mean"])
 @pytest.mark.parametrize("whole_test", [True])
 @pytest.mark.parametrize(
-    "quantile", [0.0, 0.125, 0.25, 0.375, 0.5, 0.625, 0.75, 0.875]
+    "quantile", [0.0, 0.125, 0.25, 0.375, 0.5, 0.625, 0.75, 0.875, 1.0]
 )
-def test_id_STOODX_cifar10_postProcessor(
+def test_id_XAI_cifar100_postProcessor(
     id_set,
     model_name,
     weights,
@@ -99,7 +107,7 @@ def test_id_STOODX_cifar10_postProcessor(
     elif not os.path.exists(f"./results/{result_file}"):
         os.makedirs(f"./results/{result_file}",exist_ok=True)
     print(f"Calculating results in {result_file}:")
-    net = ResNet18_32x32(num_classes=10).to(device)
+    net = ResNet18_32x32(num_classes=num_classes[id_set]).to(device)
     net.load_state_dict(torch.load(weights, map_location=device))
 
     net.to(device)
@@ -134,7 +142,6 @@ def test_id_STOODX_cifar10_postProcessor(
     metrics = evaluator.eval_ood(fsood=(fsood == "fsood"))
 
     with open(f"./results/{result_file}/metrics.csv", "w") as f:
-        # Imprimir los resultados en el archivo
         metrics.to_csv(f, sep="\t")
     with open(f"./results/{result_file}/results.json", "w") as f:
         scores = evaluator.scores
@@ -143,13 +150,13 @@ def test_id_STOODX_cifar10_postProcessor(
     assert True
 
 
-@pytest.mark.parametrize("id_set", ["cifar10"])
+@pytest.mark.parametrize("id_set", ["cifar100"])
 @pytest.mark.parametrize(
     "model_name,weights",
     [
         (
             "resnet18",
-            "./pretrained_models/cifar10_resnet18_32x32_base_e100_lr0.1_default/s0/best.ckpt",
+            "./pretrained_models/cifar100_resnet18_32x32_base_e100_lr0.1_default/s0/best.ckpt",
         ),
     ],
 )
@@ -170,7 +177,7 @@ def test_id_STOODX_cifar10_postProcessor(
         "nnguide",
     ],
 )
-def test_Baseline_cifar10_postProcessor(
+def test_Baseline_cifar100_postProcessor(
     id_set, model_name, weights, fsood, baseline_postprocessor
 ):
     result_file = (

@@ -1,13 +1,21 @@
+"""Internal OpenOOD adapter postprocessor — NOT public API.
+
+This module bridges STOOD-X's detector to the OpenOOD evaluation framework. It
+imports `openood` transitively; treat it as private and import only via the
+package's internal relative paths.
+"""
 import torch
 from typing import Any
+
+__all__ = ["STOODXPostprocessor"]
 from tqdm import tqdm
 from openood.postprocessors import BasePostprocessor
 import openood.utils.comm as comm
 import pandas as pd
 import os
 
-from STOODX.featureStractor import FeatureStractor
-from STOODX.STOODX import STOODX
+from ..feature_extractor import FeatureExtractor
+from ..stoodx import STOODX
 
 class STOODXPostprocessor(BasePostprocessor):
     def __init__(self, config):
@@ -50,7 +58,7 @@ class STOODXPostprocessor(BasePostprocessor):
     def setup(self, net: torch.nn.Module, id_loader_dict, ood_loader_dict):
         # Create the feature extractor
         net = net.to(self.device)
-        feature_extractor = FeatureStractor(model=net, device=self.device, feature_name=self.feature_name, atribut=self.atribut).to(self.device)
+        feature_extractor = FeatureExtractor(model=net, device=self.device, feature_name=self.feature_name, atribut=self.atribut).to(self.device)
         self.oodTest = STOODX(
             model=feature_extractor, distance=self.distance, quantile=self.quantile,
             whole_test=self.whole_test,k_neighbors=self.K,k_NNs=self.NNK

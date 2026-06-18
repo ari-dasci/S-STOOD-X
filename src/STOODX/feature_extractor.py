@@ -2,7 +2,7 @@ import torch
 from crp.attribution import CondAttribution
 from zennit.composites import Composite
 
-class FeatureStractor(torch.nn.Module):
+class FeatureExtractor(torch.nn.Module):
     '''
     Class for Feature Extraction
     
@@ -26,7 +26,7 @@ class FeatureStractor(torch.nn.Module):
                  atribut: bool,
                  composite: Composite = None,
                  relative=True):
-        super(FeatureStractor, self).__init__()
+        super(FeatureExtractor, self).__init__()
         self.model = model.to(device)
         self.feature_name = feature_name
         self.atribution = CondAttribution(self.model, no_param_grad=True)

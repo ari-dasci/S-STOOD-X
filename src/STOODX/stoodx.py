@@ -1,6 +1,6 @@
 import torch
 import pandas as pd
-from STOODX.featureStractor import FeatureStractor
+from .feature_extractor import FeatureExtractor
 from typing import Callable
 from scipy import stats
 import numpy as np
@@ -18,7 +18,7 @@ class STOODX:
         The distance function to use betwen the validation features and the test features. It must be a function that takes two torch.Tensors 
         and returns a torch.Tensor of shape (1,).
     ''' 
-    def __init__(self, model: FeatureStractor,
+    def __init__(self, model: FeatureExtractor,
                  distance: Callable = lambda x, y: torch.norm(x - y, dim=1),
                  k_neighbors: int = 50,
                  k_NNs: int = 50,

@@ -8,8 +8,8 @@ from matplotlib import pyplot as plt
 from openood.networks import ResNet18_32x32
 import pandas as pd
 
-from STOODX.STOODXPostprocessor import STOODXPostprocessor
-from STOODX.featureVisualization import FeatureExplanation
+from STOODX._openood_adapter.postprocessor import STOODXPostprocessor
+from STOODX.feature_visualization import FeatureExplanation
 from crp.visualization import FeatureVisualization
 from crp.image import plot_grid
 from crp.helper import get_layer_names
