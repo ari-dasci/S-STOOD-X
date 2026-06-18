@@ -1,0 +1,2 @@
+# Active SDD changes live under openspec/changes/{change-name}/.
+# See _shared/openspec-convention.md for the per-change folder layout (proposal, specs, design, tasks, verify-report, state.yaml).

@@ -69,28 +69,34 @@ sphinx, twine, tensorboard, …) into a local `.venv`, using the pinned `uv.lock
 uv run pytest
 ```
 
-### CUDA (optional, GPU acceleration)
+### PyTorch: CPU and GPU
 
-The committed `uv.lock` resolves the **CPU** build of PyTorch from PyPI so the
-environment is reproducible on any machine. To opt into a CUDA build of
-PyTorch, add the following to your `pyproject.toml` locally (do not commit it)
-and run `uv lock` to regenerate the lock with the GPU wheels:
+The committed `uv.lock` resolves `torch` from the default PyPI index. On Linux
+this is the **CUDA-compatible wheel**: it bundles the CUDA runtime libraries
+(pulled in as `nvidia-cuda-*` transitive dependencies) and runs on **both** CPU
+and GPU. On a CPU-only machine PyTorch automatically falls back to CPU; on a
+machine with a CUDA device it uses the GPU. No extra configuration is needed for
+inference/training on GPU servers — `uv sync` already gives you a GPU-capable
+environment.
 
-```toml
-# === LOCAL ONLY — uncomment when you need GPU. Do not commit. ===
-# [tool.uv.index]
-# pytorch-cu124 = "https://download.pytorch.org/whl/cu124"
-
-# [tool.uv.sources]
-# torch = { index = "pytorch-cu124" }
-# torchvision = { index = "pytorch-cu124" }
-```
-
-Alternatively, without editing `pyproject.toml`, you can override the index for
-a one-off resolution:
+The trade-off of the default lock is disk size: CPU-only machines still
+download the unused CUDA libraries. If you want a **true CPU-only** (small,
+CUDA-free) environment, point uv at the PyTorch CPU index:
 
 ```bash
-UV_PYTHON_INDEX_URL=https://download.pytorch.org/whl/cu124 uv lock
+UV_PYTHON_INDEX_URL=https://download.pytorch.org/whl/cpu uv sync
+```
+
+Or, to pin it persistently in a local (uncommitted) `pyproject.toml`:
+
+```toml
+# === LOCAL ONLY — uncomment for a CPU-only env. Do not commit. ===
+# [tool.uv.index]
+# pytorch-cpu = "https://download.pytorch.org/whl/cpu"
+
+# [tool.uv.sources]
+# torch = { index = "pytorch-cpu" }
+# torchvision = { index = "pytorch-cpu" }
 ```
 
 ### Known limitations

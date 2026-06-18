@@ -1,0 +1,64 @@
+# SDD / OpenSpec configuration for S-STOOD-X
+# Artifact store: openspec (file-based). Authoritative artifacts live here, not in Engram.
+# Chained PR strategy: force-chained | Review budget: 800 changed lines.
+schema: spec-driven
+
+project: S-STOOD-X
+
+context: |
+  Tech stack: Python 3.10+ (pyproject.toml, setuptools backend, `pip install -e .`).
+  ML/DL stack: PyTorch>=2.4.1, torchvision, NumPy, pandas, scipy, scikit-learn, scikit-image.
+  Domain: STOOD-X - nonparametric (Wilcoxon-Mann-Whitney) statistical OOD detection + concept-based
+    XAI. Deps: zennit-crp[fast_img], revel-xai, baycomp, libmr, OpenOOD (git), efficientnet_pytorch.
+  Architecture: single-package layered research library. STOODX/ = core (STOODX detector,
+    FeatureStractor wrap, featureVisualization XAI, STOODXPostprocessor = OpenOOD adapter).
+    Dependency direction: tests -> STOODX core -> torch/OpenOOD; STOODXPostprocessor is the only
+    OpenOOD seam. configs/postprocessors/*.yml, Sphinx docs. data/results/pretrained/utils are gitignored runtime data.
+  Conventions: mixedCase module names (featureStractor.py), PascalCase classes, numpydoc-style
+    docstrings, pytest parametrize. No linter/type-checker/formatter configured; no CI (.github absent).
+
+strict_tdd: false   # Tests are heavy compute-bound experimental drivers, not a fast deterministic red-green loop.
+
+testing:
+  runner: pytest
+  framework: pytest (>=8, declared as runtime dep in pyproject.toml)
+  test_command: "pytest"            # run from repo root; postprocessor tests rely on CWD-relative paths (./results, ./pretrained_models, ./utils/data)
+  test_layers:
+    unit: false                     # no fast unit layer; test_featureStractor.py downloads DEFAULT torchvision weights + runs forward passes
+    integration: true               # test_postProcessor_{cifar10,cifar100,imagenet,imagenet200}.py run full OpenOOD Evaluator.eval_ood pipelines
+    e2e: true                       # test_featureVisualization.py generates XAI figures end-to-end on ImageNet ViT/ResNet
+  coverage:
+    available: false                # pytest-cov not declared in deps
+    command: ""
+  prerequisites: "Python>=3.10 env with torch>=2.4.1/openood/libmr + pretrained checkpoints under ./pretrained_models + datasets under ./utils/data; GPU recommended."
+  quality:
+    linter: "not configured"
+    type_checker: "not configured"
+    formatter: "not configured"
+
+rules:
+  proposal:
+    - Classify every change as structural (safe) vs experimental/methodology (requires author sign-off; may affect published numerical results).
+    - Force-chained PRs: split changes exceeding the 800-line review budget into reviewable slices.
+    - State dataset/model/GPU prerequisites for any change touching compute paths.
+  specs:
+    - Use Given/When/Then for scenarios.
+    - Use RFC 2119 keywords (MUST, SHALL, SHOULD, MAY).
+  design:
+    - Keep the dependency direction tests -> STOODX core -> torch/OpenOOD; STOODXPostprocessor stays the only OpenOOD adapter.
+    - Document any numerical/statistical change with rationale (it affects published AUROC/p-value reproducibility).
+  tasks:
+    - Group by phase with hierarchical numbering; keep each task completable in one session.
+    - Keep each task within the 800-line review budget (force-chained PRs when exceeded).
+  apply:
+    tdd: false
+    test_command: "pytest"
+    rules:
+      - Follow existing patterns: mixedCase module names, PascalCase classes, numpydoc-style docstrings.
+      - Do not alter statistical/numerical behavior without author sign-off.
+  verify:
+    test_command: "pytest"
+    build_command: "pip install -e ."
+    coverage_threshold: 0
+  archive:
+    - Warn before merging destructive deltas; preserve published-numerics reproducibility.
