@@ -20,7 +20,6 @@ dependencies = [
         "zennit-crp[fast_img]>=0.6.0",
         "revel-xai>=1.0.3",
         "numpy>=2.1.2",
-        "pytest>=8",
         "scikit-learn>=1.5.2",
         "scikit-image>=0.24.0",
         "torch>=2.4.1",
@@ -32,24 +31,38 @@ dependencies = [
         "efficientnet_pytorch>=0.7.1",
         "tqdm>=4.66.5",
         "opencv-python>=4.10.0.84",
-        "IPython>=8.28.0",
         "seaborn>=0.13.2",
         "plotly>=5.24.1",
-        "ipywidgets>=8.1.5",
-        "sphinx>=8.0.2",
-        "sphinx_rtd_theme>=3.0.0",
-        "sphinxcontrib.bibtex>=2.6.3",
-        "nbsphinx>=0.9.5",
-        "wget>=3.2",
-        "pandoc>=2.4",
-        "torchsummary>=1.5.1",
-        "tensorboard>=2.18.0",
-        "twine>=5.1.1",
         "statsmodels",
-        "git+https://github.com/Jingkang50/OpenOOD",
         "libmr",
-
+        "openood",
     ]
+
+[dependency-groups]
+dev = [
+    "pytest>=8",
+    "sphinx>=8.0.2",
+    "sphinx_rtd_theme>=3.0.0",
+    "sphinxcontrib.bibtex>=2.6.3",
+    "nbsphinx>=0.9.5",
+    "pandoc>=2.4",
+    "twine>=5.1.1",
+    "IPython>=8.28.0",
+    "ipywidgets>=8.1.5",
+    "tensorboard>=2.18.0",
+    "torchsummary>=1.5.1",
+    "wget>=3.2",
+]
+
+[tool.uv.sources]
+openood = { git = "https://github.com/Jingkang50/OpenOOD", rev = "3c35632ee91b54b09d1f085d04f94744cece7d0b" }
+
+# libmr's setup.py imports numpy at build time but does not declare it in its
+# own build-system.requires. This makes numpy available during libmr's isolated
+# build only (build-time, not a runtime pin change).
+[tool.uv.extra-build-dependencies]
+libmr = ["numpy", "cython"]
+
 [tool.setuptools]
 packages = ["STOODX"]
 

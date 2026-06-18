@@ -40,31 +40,76 @@ This repository implements the methodology described in:
 
 ## Installation
 
+STOOD-X uses [uv](https://docs.astral.sh/uv/) for reproducible environment management.
+All dependencies are pinned through the committed `uv.lock`, so any clone of the
+repository resolves to the exact same environment.
+
 ### Prerequisites
 
-- Python >= 3.10
-- PyTorch >= 2.4.1
-- CUDA (optional, for GPU acceleration)
+- [uv](https://docs.astral.sh/uv/getting-started/installation/) (any recent version)
+- Python 3.10 (uv will fetch it automatically based on `.python-version`)
+- A C/C++ compiler toolchain, required to build the `libmr` C extension
+  (`build-essential` on Debian/Ubuntu, `gcc`/`gcc-c++` on Fedora/RHEL,
+  "Desktop development with C++" on Windows).
 
 ### Install from source
 
 ```bash
 git clone https://github.com/ari-dasci/S-STOOD-X.git
 cd S-STOOD-X
-pip install -e .
+uv sync
 ```
 
-### Install dependencies manually
+`uv sync` installs the editable package plus the `dev` dependency group (pytest,
+sphinx, twine, tensorboard, …) into a local `.venv`, using the pinned `uv.lock`.
+
+### Run the tests
 
 ```bash
-pip install torch>=2.4.1 torchvision>=0.19.1
-pip install numpy>=2.1.2 pandas>=2.2.3 scipy>=1.14.1
-pip install scikit-learn>=1.5.2 scikit-image>=0.24.0
-pip install matplotlib>=3.9.2 seaborn>=0.13.2 plotly>=5.24.1
-pip install zennit-crp[fast_img]>=0.6.0 revel-xai>=1.0.3
-pip install baycomp>=1.0.3 opencv-python>=4.10.0.84
-pip install tqdm>=4.66.5 tensorboard>=2.18.0
+uv run pytest
 ```
+
+### CUDA (optional, GPU acceleration)
+
+The committed `uv.lock` resolves the **CPU** build of PyTorch from PyPI so the
+environment is reproducible on any machine. To opt into a CUDA build of
+PyTorch, add the following to your `pyproject.toml` locally (do not commit it)
+and run `uv lock` to regenerate the lock with the GPU wheels:
+
+```toml
+# === LOCAL ONLY — uncomment when you need GPU. Do not commit. ===
+# [tool.uv.index]
+# pytorch-cu124 = "https://download.pytorch.org/whl/cu124"
+
+# [tool.uv.sources]
+# torch = { index = "pytorch-cu124" }
+# torchvision = { index = "pytorch-cu124" }
+```
+
+Alternatively, without editing `pyproject.toml`, you can override the index for
+a one-off resolution:
+
+```bash
+UV_PYTHON_INDEX_URL=https://download.pytorch.org/whl/cu124 uv lock
+```
+
+### Known limitations
+
+- **`pytest` collection currently fails on 5 modules.** Running
+  `uv run pytest --collect-only` raises collection errors for
+  `tests/test_featureVisualization.py`,
+  `tests/test_postProcessor_cifar10.py`,
+  `tests/test_postProcessor_cifar100.py`,
+  `tests/test_postProcessor_imagenet.py`, and
+  `tests/test_postProcessor_imagenet200.py`.
+  Root cause: `imgaug` (pulled in transitively by the pinned `openood`
+  dependency through its `draem_preprocessor`) uses `numpy.sctypes`, which was
+  removed in NumPy 2.0. STOOD-X pins `numpy>=2.1.2`, and `imgaug` is
+  unmaintained (last release in 2021), so no NumPy-2-compatible release of
+  `imgaug` exists. This is a latent conflict that predates the uv migration and
+  is now made explicit by the locked environment. Resolution is tracked for a
+  follow-up change. Environment-level imports (`uv run python -c "import STOODX"`)
+  and the rest of the collection succeed.
 
 ## Quick Start
 
