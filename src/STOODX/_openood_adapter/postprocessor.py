@@ -15,7 +15,7 @@ import pandas as pd
 import os
 
 from ..feature_extractor import FeatureExtractor
-from ..stoodx import STOODX
+from ..stoodx import STOODXDetector
 
 class STOODXPostprocessor(BasePostprocessor):
     def __init__(self, config):
@@ -59,7 +59,7 @@ class STOODXPostprocessor(BasePostprocessor):
         # Create the feature extractor
         net = net.to(self.device)
         feature_extractor = FeatureExtractor(model=net, device=self.device, feature_name=self.feature_name, atribut=self.atribut).to(self.device)
-        self.oodTest = STOODX(
+        self.oodTest = STOODXDetector(
             model=feature_extractor, distance=self.distance, quantile=self.quantile,
             whole_test=self.whole_test,k_neighbors=self.K,k_NNs=self.NNK
         )
