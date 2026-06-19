@@ -4,11 +4,11 @@ from zennit.composites import Composite
 
 
 class FeatureExtractor(torch.nn.Module):
-    '''
+    """
     Class for Feature Extraction
-    
+
     A Feature Extractor object is used to extract features and their relevance from a specific layer of a model.
-    
+
     Parameters
     ----------
     model : torch.nn.Module
@@ -19,14 +19,17 @@ class FeatureExtractor(torch.nn.Module):
         The name of layer representing the feature to extract.
     composite : zennit.composites.Composite, optional
         The composite to use for the attribution calculation. If not provided, the default composite will be used.
-    '''
-    def __init__(self,
-                 model: torch.nn.Module,
-                 device: torch.device,
-                 feature_name: str,
-                 atribut: bool,
-                 composite: Composite = None,
-                 relative=True):
+    """
+
+    def __init__(
+        self,
+        model: torch.nn.Module,
+        device: torch.device,
+        feature_name: str,
+        atribut: bool,
+        composite: Composite = None,
+        relative=True,
+    ):
         super(FeatureExtractor, self).__init__()
         self.model = model.to(device)
         self.feature_name = feature_name
@@ -45,7 +48,7 @@ class FeatureExtractor(torch.nn.Module):
 
         attr = self.atribution(
             _x,
-            conditions=[{'y': [x_class]}],
+            conditions=[{"y": [x_class]}],
             composite=self.composite,
             record_layer=[self.feature_name],
             init_rel=-1,

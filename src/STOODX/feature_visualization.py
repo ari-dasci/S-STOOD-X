@@ -12,7 +12,6 @@ if TYPE_CHECKING:
 
 
 class FeatureExplanation(torch.nn.Module):
-
     def __init__(self, net: torch.nn.Module, stoodx_postprocessor: STOODXPostprocessor, dataset):
         super(FeatureExplanation, self).__init__()
         self.net = net.to(stoodx_postprocessor.device)
@@ -139,9 +138,7 @@ class FeatureExplanation(torch.nn.Module):
         torch.Tensor
             Heatmap with the presence of the feature.
         """
-        class_index = torch.argmax(
-            self.STOODXPostprocessor.oodTest(example.unsqueeze(0)).squeeze(0), dim=0
-        )
+        class_index = torch.argmax(self.STOODXPostprocessor.oodTest(example.unsqueeze(0)).squeeze(0), dim=0)
 
         example.requires_grad = True
 

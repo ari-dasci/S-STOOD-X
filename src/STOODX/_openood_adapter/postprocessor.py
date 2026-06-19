@@ -4,6 +4,7 @@ This module bridges STOOD-X's detector to the OpenOOD evaluation framework. It
 imports `openood` transitively; treat it as private and import only via the
 package's internal relative paths.
 """
+
 from typing import Any
 
 import torch
@@ -23,16 +24,16 @@ from ..stoodx import STOODXDetector
 class STOODXPostprocessor(BasePostprocessor):
     def __init__(self, config):
         super(STOODXPostprocessor, self).__init__(config)
-        self.K = self.config['K']
-        self.NNK = self.config.get('NN_K', 5)
-        self.distance = self.config['distance']
-        self.feature_name = self.config['feature_name']
+        self.K = self.config["K"]
+        self.NNK = self.config.get("NN_K", 5)
+        self.distance = self.config["distance"]
+        self.feature_name = self.config["feature_name"]
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        self.intraclass = self.config['intraclass']
-        self.quantile = self.config['quantil']
-        self.atribut = self.config['atribut']
-        self.partition = self.config.get('partition', 'train')
-        self.whole_test = self.config.get('whole_test', False)
+        self.intraclass = self.config["intraclass"]
+        self.quantile = self.config["quantil"]
+        self.atribut = self.config["atribut"]
+        self.partition = self.config.get("partition", "train")
+        self.whole_test = self.config.get("whole_test", False)
         self.id_name = self.config.get("id_name")
         self.model_name = self.config.get("model_name")
         self.APS_mode = False
@@ -61,10 +62,16 @@ class STOODXPostprocessor(BasePostprocessor):
     def setup(self, net: torch.nn.Module, id_loader_dict, ood_loader_dict):
         # Create the feature extractor
         net = net.to(self.device)
-        feature_extractor = FeatureExtractor(model=net, device=self.device, feature_name=self.feature_name, atribut=self.atribut).to(self.device)
+        feature_extractor = FeatureExtractor(
+            model=net, device=self.device, feature_name=self.feature_name, atribut=self.atribut
+        ).to(self.device)
         self.oodTest = STOODXDetector(
-            model=feature_extractor, distance=self.distance, quantile=self.quantile,
-            whole_test=self.whole_test,k_neighbors=self.K,k_NNs=self.NNK
+            model=feature_extractor,
+            distance=self.distance,
+            quantile=self.quantile,
+            whole_test=self.whole_test,
+            k_neighbors=self.K,
+            k_NNs=self.NNK,
         )
 
         if os.path.exists(
@@ -72,7 +79,6 @@ class STOODXPostprocessor(BasePostprocessor):
         ) and os.path.exists(
             f"./utils/features/{self.id_name}_{self.model_name}_{self.feature_name}_{self.partition}_classes.pth"
         ):
-
             self.oodTest.feats = torch.load(
                 f"./utils/features/{self.id_name}_{self.model_name}_{self.feature_name}_{self.partition}.pth",
                 weights_only=True,
@@ -89,20 +95,20 @@ class STOODXPostprocessor(BasePostprocessor):
                 loader_dict = id_loader_dict[self.partition]
             else:
                 # Une los loaders
-                combined_dataset = [id_loader_dict[self.partition.split("_")[0]].dataset,
-                                    id_loader_dict[self.partition.split("_")[1]].dataset]
+                combined_dataset = [
+                    id_loader_dict[self.partition.split("_")[0]].dataset,
+                    id_loader_dict[self.partition.split("_")[1]].dataset,
+                ]
                 combined_dataset = torch.utils.data.ConcatDataset(combined_dataset)
-                loader_dict = torch.utils.data.DataLoader(
-                    combined_dataset, batch_size=32, shuffle=False
-                )
+                loader_dict = torch.utils.data.DataLoader(combined_dataset, batch_size=32, shuffle=False)
             for batch in tqdm(loader_dict, desc="Adding features..."):
-                data = batch['data'].to(self.device)
+                data = batch["data"].to(self.device)
 
                 self.oodTest.addFeatures(data)
 
             self.oodTest.finalizeFeatures()
 
-            os.makedirs("./utils/features/",exist_ok=True)
+            os.makedirs("./utils/features/", exist_ok=True)
             torch.save(
                 self.oodTest.feats,
                 f"./utils/features/{self.id_name}_{self.model_name}_{self.feature_name}_{self.partition}.pth",
@@ -117,7 +123,7 @@ class STOODXPostprocessor(BasePostprocessor):
         confs = []
 
         for batch in tqdm(data, desc="Calculating OOD conf..."):
-            data = batch['data'].to(self.device)
+            data = batch["data"].to(self.device)
             pred = self.oodTest(data)
             pred_list.append(pred)
 
@@ -134,8 +140,9 @@ class STOODXPostprocessor(BasePostprocessor):
         label_list = []
         preds, confs = self.postprocess(net, data_loader)
 
-        for batch in tqdm(data_loader, desc="Calculating inference...",
-                          disable=not progress or not comm.is_main_process()):
+        for batch in tqdm(
+            data_loader, desc="Calculating inference...", disable=not progress or not comm.is_main_process()
+        ):
             label = batch["label"].to(self.device)
             label_list.append(label)
 

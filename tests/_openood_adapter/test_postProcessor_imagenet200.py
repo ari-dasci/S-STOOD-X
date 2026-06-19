@@ -33,9 +33,11 @@ num_classes = {"cifar10": 10, "cifar100": 100, "imagenet200": 200, "imagenet": 1
 
 dists = {
     "cosine": lambda x, y: 1 - torch.cosine_similarity(x, y, dim=1),
-    "normCosine": lambda x, y: (1 - torch.cosine_similarity(x, y, dim=1))
-    * (torch.min(torch.norm(x, dim=1), torch.norm(y, dim=1)))
-    / torch.max(torch.norm(x, dim=1), torch.norm(y, dim=1)),
+    "normCosine": lambda x, y: (
+        (1 - torch.cosine_similarity(x, y, dim=1))
+        * (torch.min(torch.norm(x, dim=1), torch.norm(y, dim=1)))
+        / torch.max(torch.norm(x, dim=1), torch.norm(y, dim=1))
+    ),
 }
 statistics = {
     "min": lambda x: x["p_value"].min(),
@@ -64,7 +66,6 @@ statistics = {
 @pytest.mark.parametrize(
     "K,partition",
     [
-
         (500, "train"),
     ],
 )
@@ -72,9 +73,7 @@ statistics = {
 @pytest.mark.parametrize("dist", ["cosine"])
 @pytest.mark.parametrize("p_value_statistic", ["mean"])
 @pytest.mark.parametrize("whole_test", [True])
-@pytest.mark.parametrize(
-    "quantile", [0.0, 0.125, 0.25, 0.375, 0.5, 0.625, 0.75, 0.875, 1.0]
-)
+@pytest.mark.parametrize("quantile", [0.0, 0.125, 0.25, 0.375, 0.5, 0.625, 0.75, 0.875, 1.0])
 def test_id_XAI_imagenet200_postProcessor(
     id_set,
     model_name,
@@ -92,9 +91,7 @@ def test_id_XAI_imagenet200_postProcessor(
     quantile,
 ):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    result_file = (
-        f"XAI_{model_name}_{id_set}_{feature_name}_NN_{K}_{fsood}_WT_{whole_test}"
-    )
+    result_file = f"XAI_{model_name}_{id_set}_{feature_name}_NN_{K}_{fsood}_WT_{whole_test}"
 
     result_file = result_file + f"_{partition}_Q{quantile}"
 
@@ -105,7 +102,7 @@ def test_id_XAI_imagenet200_postProcessor(
         print(df)
         return
     elif not os.path.exists(f"./results/{result_file}"):
-        os.makedirs(f"./results/{result_file}",exist_ok=True)
+        os.makedirs(f"./results/{result_file}", exist_ok=True)
     print(f"Calculating results in {result_file}:")
     net = ResNet18_224x224(num_classes=num_classes[id_set])
     net.load_state_dict(torch.load(weights, map_location=device))
@@ -177,12 +174,8 @@ def test_id_XAI_imagenet200_postProcessor(
         "nnguide",
     ],
 )
-def test_Baseline_imagnet200_postProcessor(
-    id_set, model_name, weights, fsood, baseline_postprocessor
-):
-    result_file = (
-        f"{baseline_postprocessor}_{model_name}_{id_set}_{'fsood' if fsood else 'ood'}"
-    )
+def test_Baseline_imagnet200_postProcessor(id_set, model_name, weights, fsood, baseline_postprocessor):
+    result_file = f"{baseline_postprocessor}_{model_name}_{id_set}_{'fsood' if fsood else 'ood'}"
     if os.path.exists(f"./results/{result_file}/metrics.csv"):
         assert True
         print(f"Reading results from {result_file}/metrics.csv")
@@ -190,7 +183,7 @@ def test_Baseline_imagnet200_postProcessor(
         print(df)
         return
     else:
-        os.makedirs(f"./results/{result_file}",exist_ok=True)
+        os.makedirs(f"./results/{result_file}", exist_ok=True)
     print(f"Calculating results in {result_file}:")
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
