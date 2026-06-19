@@ -77,7 +77,7 @@ ignore = ["E501"]
 "tests/_openood_adapter/test_postProcessor_cifar100.py" = ["F401"]
 "tests/_openood_adapter/test_postProcessor_imagenet.py" = ["F401"]
 "tests/_openood_adapter/test_postProcessor_imagenet200.py" = ["F401"]
-"tests/test_feature_visualization.py" = ["F401"]
+"tests/test_feature_visualization.py" = ["F401", "E402"]
 
 [tool.uv.sources]
 openood = { git = "https://github.com/Jingkang50/OpenOOD", rev = "3c35632ee91b54b09d1f085d04f94744cece7d0b" }

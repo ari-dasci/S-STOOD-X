@@ -1,20 +1,19 @@
+import json
+import os
+
+import numpy as np
+import pandas as pd
 import pytest
 import torch
-import os
-import json
-import numpy as np
+import torchvision
 from openood.evaluation_api import Evaluator
-from openood.networks.resnet50 import ResNet50
 from openood.networks import ResNet18_224x224
-from openood.networks.vit_b_16 import ViT_B_16
-from openood.networks.swin_t import Swin_T
 from openood.networks.regnet_y_16gf import RegNet_Y_16GF
-
-
-import pandas as pd
+from openood.networks.resnet50 import ResNet50
+from openood.networks.swin_t import Swin_T
+from openood.networks.vit_b_16 import ViT_B_16
 
 from STOODX._openood_adapter.postprocessor import STOODXPostprocessor
-import torchvision
 
 
 def convert_numpy_to_list(obj):

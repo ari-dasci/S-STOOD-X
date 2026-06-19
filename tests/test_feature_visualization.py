@@ -1,31 +1,33 @@
+import json
+import os
+
+import numpy as np
+import pandas as pd
 import pytest
 import torch
-import os
-import json
-import numpy as np
-from openood.evaluation_api import Evaluator
+import torchvision
+from crp.helper import get_layer_names
+from crp.image import plot_grid
+from crp.visualization import FeatureVisualization
 from matplotlib import pyplot as plt
+from openood.evaluation_api import Evaluator
 from openood.networks import ResNet18_32x32
-import pandas as pd
 
 from STOODX._openood_adapter.postprocessor import STOODXPostprocessor
 from STOODX.feature_visualization import FeatureExplanation
-from crp.visualization import FeatureVisualization
-from crp.image import plot_grid
-from crp.helper import get_layer_names
-import torchvision
 
 cmaps = ["Purples", "Blues", "Greens", "Oranges", "Reds", "Greys"]
 
 
 from torchvision.models.vision_transformer import VisionTransformer
 
+
 class CLSExtractor(torch.nn.Module):
     # Use a torch function to extract the CLS token from the output of the encoder
-    
+
     def forward(self, x):
         feature_vector = torch.index_select(x, 1, torch.tensor([0], device=x.device)).squeeze(1)
-        
+
         feature_vector = feature_vector
         return feature_vector
 class ViT_B_16(VisionTransformer):
@@ -106,16 +108,16 @@ def save_tensor_as_image(tensor, file_path):
 
 def save_heatmap_as_image(heatmap, file_path,max_value=None,cmap_index=0):
     #Dimension of the heatmap is (1, H, W)
-    
+
     heatmap = heatmap.to("cpu").numpy()
     heatmap = heatmap[0]
-    if max_value != None:
+    if max_value is not None:
         heatmap = heatmap / max_value
     else:
         heatmap = heatmap/np.abs(heatmap).max()
     # cmap must be blue when -1 and red when 1. Must me black when 0
     # I must use the cmap
-    
+
     plt.imshow(heatmap, cmap=cmaps[cmap_index], interpolation="nearest", vmin=-1, vmax=1)
     plt.axis("off")
     plt.savefig(file_path, bbox_inches="tight", pad_inches=0)
@@ -134,14 +136,14 @@ def save_sum_tensor_and_heatmap(filepath,tensor, heatmap,cmap_index=0):
     heatmap_plot = plt.cm.get_cmap(cmaps[cmap_index])(heatmap_plot)
 
     # Transform tensor (224,224,3) to (224,224,4) where the last channel is the heatmap
-    
-    
-    
-    
+
+
+
+
     tensor_with_alpha = np.zeros((224, 224, 4))
     tensor_with_alpha[:, :, 0:3] = tensor
     tensor_with_alpha[:, :, 3] = np.abs(heatmap[0])/np.abs(heatmap[0]).max()
-    
+
     image = 0.5 * tensor_with_alpha + 0.5 * heatmap_plot
     plt.imshow(image)
     plt.axis("off")

@@ -1,20 +1,19 @@
+import json
+import os
+
+import numpy as np
+import pandas as pd
 import pytest
 import torch
-import os
-import json
-import numpy as np
+import torchvision
 from openood.evaluation_api import Evaluator
-from openood.networks.resnet50 import ResNet50
 from openood.networks import ResNet18_32x32
-from openood.networks.vit_b_16 import ViT_B_16
-from openood.networks.swin_t import Swin_T
 from openood.networks.regnet_y_16gf import RegNet_Y_16GF
-
-
-import pandas as pd
+from openood.networks.resnet50 import ResNet50
+from openood.networks.swin_t import Swin_T
+from openood.networks.vit_b_16 import ViT_B_16
 
 from STOODX._openood_adapter.postprocessor import STOODXPostprocessor
-import torchvision
 
 
 def convert_numpy_to_list(obj):
@@ -32,7 +31,7 @@ def convert_numpy_to_list(obj):
 
 num_classes = {"cifar10":10, "cifar100":100, "imagenet200":200,"imagenet":1000}
 
-dists = {"cosine":lambda x,y:1 - torch.cosine_similarity(x, y,dim=1), 
+dists = {"cosine":lambda x,y:1 - torch.cosine_similarity(x, y,dim=1),
         "normCosine":lambda x,y: (1-torch.cosine_similarity(x, y,dim=1))*(torch.min(torch.norm(x,dim=1),torch.norm(y,dim=1)))/torch.max(torch.norm(x,dim=1),torch.norm(y,dim=1))}
 statistics = {"min":lambda x:x["p_value"].min(),"max":lambda x:x["p_value"].max(),
               "mean":lambda x:x["p_value"].mean(),"median":lambda x:x["p_value"].median(),
@@ -112,7 +111,7 @@ def test_id_XAI_postProcessor(
     }
 
     postprocessorOOD = STOODXPostprocessor(config)
-    
+
     evaluator = Evaluator(
         net=net,id_name=id_set,
         data_root="./utils/data",
@@ -159,7 +158,7 @@ def test_Baseline_postProcessor(id_set, model_name, weights, fsood,baseline_post
         os.makedirs(f"./results/{result_file}",exist_ok=True)
     print(f"Calculating results in {result_file}:")
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    
+
     net = torchvision.models.__dict__[model_name](
         weights=weights, num_classes=num_classes[id_set]
     ).to(device)
