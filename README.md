@@ -230,6 +230,52 @@ S-STOOD-X/
 └── LICENSE                      # GPL v3 License
 ```
 
+## Development
+
+STOOD-X uses [`uv`](https://docs.astral.sh/uv/) for environment and dependency management and
+[`ruff`](https://docs.astral.sh/ruff/) for linting and formatting. All commands use the `uv run`
+prefix so they execute against the project's locked environment.
+
+### Linting and formatting
+
+```bash
+# Check lint (E, F, W, I rule families; line-length 120, target py310)
+uv run ruff check src/ tests/
+
+# Auto-apply safe fixes
+uv run ruff check src/ tests/ --fix
+
+# Check formatting
+uv run ruff format --check src/ tests/
+
+# Apply formatting
+uv run ruff format src/ tests/
+```
+
+Configuration lives under `[tool.ruff]` in `pyproject.toml`.
+
+### Tests
+
+```bash
+# Hermetic (GPU/dataset-free) tests — the ones CI runs:
+uv run pytest tests/test_public_api.py tests/_openood_adapter/test_postprocessor_contract.py -v
+
+# Full test suite (includes eval_ood tests that need GPU + gitignored checkpoints/datasets)
+uv run pytest
+```
+
+### Continuous Integration
+
+The [`.github/workflows/ci.yml`](.github/workflows/ci.yml) workflow runs on every push and pull
+request to `main` with three jobs on Python 3.10 (`astral-sh/setup-uv@v3`, cache enabled):
+
+- **lint** — `uv run ruff check src/ tests/`
+- **format-check** — `uv run ruff format --check src/ tests/`
+- **test** — `uv run pytest` on the two hermetic test modules above.
+
+The full `eval_ood` pipeline is **not** run in CI because it requires GPU hardware and
+gitignored pretrained checkpoints and datasets.
+
 ## Performance
 
 STOOD-X achieves competitive performance on standard OOD detection benchmarks:

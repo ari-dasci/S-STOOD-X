@@ -1,29 +1,35 @@
-import torch
-import pandas as pd
-from .feature_extractor import FeatureExtractor
 from typing import Callable
-from scipy import stats
+
 import numpy as np
+import pandas as pd
+import torch
+from scipy import stats
+
+from .feature_extractor import FeatureExtractor
 
 
 class STOODXDetector:
-    '''
-    class for OOD Test detector. 
+    """
+    class for OOD Test detector.
 
     Parameters
     ----------
     model : FeatureEstractor
         The model to test.
     distance :
-        The distance function to use betwen the validation features and the test features. It must be a function that takes two torch.Tensors 
+        The distance function to use betwen the validation features and the test features. It must be a function that takes two torch.Tensors
         and returns a torch.Tensor of shape (1,).
-    ''' 
-    def __init__(self, model: FeatureExtractor,
-                 distance: Callable = lambda x, y: torch.norm(x - y, dim=1),
-                 k_neighbors: int = 50,
-                 k_NNs: int = 50,
-                 quantile: float = 0.99,
-                 whole_test: bool = True):
+    """
+
+    def __init__(
+        self,
+        model: FeatureExtractor,
+        distance: Callable = lambda x, y: torch.norm(x - y, dim=1),
+        k_neighbors: int = 50,
+        k_NNs: int = 50,
+        quantile: float = 0.99,
+        whole_test: bool = True,
+    ):
         self.model = model
         self.distance = distance
         self.k_neighbors = k_neighbors
@@ -36,70 +42,70 @@ class STOODXDetector:
         self.feats_list = []
         self.classes_list = []
 
-    def __call__(self,x:torch.Tensor)->torch.Tensor:
-        '''
-            Forward method for the model wraped
-            
-            Parameters
-            ----------
-            x : torch.Tensor
-                The input tensor to extract features from.
-                
-            Returns
-            -------
-            model_prediction : torch.Tensor
-                The model prediction.
-        '''
+    def __call__(self, x: torch.Tensor) -> torch.Tensor:
+        """
+        Forward method for the model wraped
+
+        Parameters
+        ----------
+        x : torch.Tensor
+            The input tensor to extract features from.
+
+        Returns
+        -------
+        model_prediction : torch.Tensor
+            The model prediction.
+        """
         return self.forward(x)
 
-    def forward(self,x:torch.Tensor)->torch.Tensor:
-        '''
-            Forward method for the model wraped
-            
-            Parameters
-            ----------
-            x : torch.Tensor
-                The input tensor to extract features from.
-                
-            Returns
-            -------
-            model_prediction : torch.Tensor
-                The model prediction.
-        '''
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """
+        Forward method for the model wraped
+
+        Parameters
+        ----------
+        x : torch.Tensor
+            The input tensor to extract features from.
+
+        Returns
+        -------
+        model_prediction : torch.Tensor
+            The model prediction.
+        """
         return self.model(x)
 
-    def addFeatures(self,x:torch.Tensor):
-        '''
-            Method to add features of x estracted from the model to features of the OODTest object. If the features are
-            not initialized, the method will initialize them with the features of x. If not, it will add them.
+    def addFeatures(self, x: torch.Tensor):
+        """
+        Method to add features of x estracted from the model to features of the OODTest object. If the features are
+        not initialized, the method will initialize them with the features of x. If not, it will add them.
 
-            Parameters
-            ----------
-            x : torch.Tensor
-                The input tensor to extract features from. Shape must be (B,...), where B is the batch size and 
-                ... is the shape of the input accepted by the model.
-            
-            Returns
-            -------
-            None
-        '''
+        Parameters
+        ----------
+        x : torch.Tensor
+            The input tensor to extract features from. Shape must be (B,...), where B is the batch size and
+            ... is the shape of the input accepted by the model.
+
+        Returns
+        -------
+        None
+        """
         feats = self.model.features(x).squeeze()
         classes = self.forward(x).argmax(1).detach()
         self.feats_list.append(feats)
         self.classes_list.append(classes)
 
     def finalizeFeatures(self):
-        '''
-            Method to finalize the features and classes of the OODTest object by concatenating all the collected features and classes.
+        """
+        Method to finalize the features and classes of the OODTest object by concatenating all the collected features and classes.
 
-            Parameters
-            ----------
-            None
-            
-            Returns
-            -------
-            None
-        '''
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        None
+        """
         if self.feats_list:
             self.feats = torch.cat(self.feats_list, dim=0)
             self.classes = torch.cat(self.classes_list, dim=0)
@@ -107,41 +113,41 @@ class STOODXDetector:
             self.classes_list = []
 
     def restartFeatures(self):
-        '''
-            Method to restart the features and classes of the OODTest object to None.
+        """
+        Method to restart the features and classes of the OODTest object to None.
 
-            Parameters
-            ----------
-            None
-            
-            Returns
-            -------
-            None
-        '''
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        None
+        """
         self.feats = None
         self.classes = None
         self.feats_list = []
         self.classes_list = []
 
-    def features(self,x:torch.Tensor)->torch.Tensor:
-        '''
-            Method to extract features of x from the model.
+    def features(self, x: torch.Tensor) -> torch.Tensor:
+        """
+        Method to extract features of x from the model.
 
-            Parameters
-            ----------
-            x : torch.Tensor
-                The input tensor to extract features from. Shape must be (B,...), where B is the batch size and 
-                ... is the shape of the input accepted by the model.
-            
-            Returns
-            -------
-            features : torch.Tensor
-                The extracted features. Shape must be (B,F), where B is the batch size and F is the number of features.
-        '''
+        Parameters
+        ----------
+        x : torch.Tensor
+            The input tensor to extract features from. Shape must be (B,...), where B is the batch size and
+            ... is the shape of the input accepted by the model.
+
+        Returns
+        -------
+        features : torch.Tensor
+            The extracted features. Shape must be (B,F), where B is the batch size and F is the number of features.
+        """
         return self.model.features(x)
 
-    def test(self,x:torch.Tensor,intraclass:bool=True)->pd.DataFrame:
-        """
+    def test(self, x: torch.Tensor, intraclass: bool = True) -> pd.DataFrame:
+        r"""
         Method to test if the input x is OOD.
 
         The algorithm will use the following steps:
@@ -221,26 +227,22 @@ class STOODXDetector:
         x_features[least_present_idx] = 0
 
         x_distances = self.distance(x_features, feat_subset)
-        
+
         if self.k_neighbors == -1:
             sorted_x_distances_idx = torch.argsort(x_distances)
         else:
-            sorted_x_distances_idx = torch.argsort(x_distances)[:self.k_neighbors]
+            sorted_x_distances_idx = torch.argsort(x_distances)[: self.k_neighbors]
 
-        distances_knns = torch.zeros(
-            (len(sorted_x_distances_idx), len(feat_subset)), device=feat_subset.device
-        )
+        distances_knns = torch.zeros((len(sorted_x_distances_idx), len(feat_subset)), device=feat_subset.device)
         for i in range(len(sorted_x_distances_idx)):
-            distances_knns[i] = self.distance(
-                feat_subset[sorted_x_distances_idx[i]], feat_subset
-            )
+            distances_knns[i] = self.distance(feat_subset[sorted_x_distances_idx[i]], feat_subset)
 
         df_p_values = pd.DataFrame(columns=["p_value"], index=range(len(sorted_x_distances_idx)))
-        distances_top_ks = torch.sort(distances_knns, dim=0).values[0:len(sorted_x_distances_idx)]
+        distances_top_ks = torch.sort(distances_knns, dim=0).values[0 : len(sorted_x_distances_idx)]
 
-        x_distances = x_distances[sorted_x_distances_idx][:len(sorted_x_distances_idx)].detach().cpu().numpy()
+        x_distances = x_distances[sorted_x_distances_idx][: len(sorted_x_distances_idx)].detach().cpu().numpy()
 
-        for i in range(len(sorted_x_distances_idx[:self.k_NNs])):
+        for i in range(len(sorted_x_distances_idx[: self.k_NNs])):
             distances_i = distances_top_ks[:, i].detach().cpu().numpy()
 
             if self.whole_test:
