@@ -4,18 +4,21 @@ This module bridges STOOD-X's detector to the OpenOOD evaluation framework. It
 imports `openood` transitively; treat it as private and import only via the
 package's internal relative paths.
 """
-import torch
 from typing import Any
 
+import torch
+
 __all__ = ["STOODXPostprocessor"]
-from tqdm import tqdm
-from openood.postprocessors import BasePostprocessor
+import os
+
 import openood.utils.comm as comm
 import pandas as pd
-import os
+from openood.postprocessors import BasePostprocessor
+from tqdm import tqdm
 
 from ..feature_extractor import FeatureExtractor
 from ..stoodx import STOODXDetector
+
 
 class STOODXPostprocessor(BasePostprocessor):
     def __init__(self, config):
@@ -99,7 +102,7 @@ class STOODXPostprocessor(BasePostprocessor):
 
             self.oodTest.finalizeFeatures()
 
-            os.makedirs(f"./utils/features/",exist_ok=True)
+            os.makedirs("./utils/features/",exist_ok=True)
             torch.save(
                 self.oodTest.feats,
                 f"./utils/features/{self.id_name}_{self.model_name}_{self.feature_name}_{self.partition}.pth",

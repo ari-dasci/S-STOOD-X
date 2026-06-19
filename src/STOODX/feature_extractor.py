@@ -2,6 +2,7 @@ import torch
 from crp.attribution import CondAttribution
 from zennit.composites import Composite
 
+
 class FeatureExtractor(torch.nn.Module):
     '''
     Class for Feature Extraction

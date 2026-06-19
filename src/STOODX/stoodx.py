@@ -1,9 +1,11 @@
-import torch
-import pandas as pd
-from .feature_extractor import FeatureExtractor
 from typing import Callable
-from scipy import stats
+
 import numpy as np
+import pandas as pd
+import torch
+from scipy import stats
+
+from .feature_extractor import FeatureExtractor
 
 
 class STOODXDetector:
@@ -17,7 +19,7 @@ class STOODXDetector:
     distance :
         The distance function to use betwen the validation features and the test features. It must be a function that takes two torch.Tensors 
         and returns a torch.Tensor of shape (1,).
-    ''' 
+    '''
     def __init__(self, model: FeatureExtractor,
                  distance: Callable = lambda x, y: torch.norm(x - y, dim=1),
                  k_neighbors: int = 50,
@@ -141,7 +143,7 @@ class STOODXDetector:
         return self.model.features(x)
 
     def test(self,x:torch.Tensor,intraclass:bool=True)->pd.DataFrame:
-        """
+        r"""
         Method to test if the input x is OOD.
 
         The algorithm will use the following steps:
@@ -221,7 +223,7 @@ class STOODXDetector:
         x_features[least_present_idx] = 0
 
         x_distances = self.distance(x_features, feat_subset)
-        
+
         if self.k_neighbors == -1:
             sorted_x_distances_idx = torch.argsort(x_distances)
         else:

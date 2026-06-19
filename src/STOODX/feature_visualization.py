@@ -3,10 +3,9 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import torch
-from zennit.composites import EpsilonPlusFlat
-from zennit.canonizers import SequentialMergeBatchNorm
 from crp.attribution import CondAttribution
-from crp.concepts import ChannelConcept
+from zennit.canonizers import SequentialMergeBatchNorm
+from zennit.composites import EpsilonPlusFlat
 
 if TYPE_CHECKING:
     from ._openood_adapter.postprocessor import STOODXPostprocessor
@@ -144,7 +143,6 @@ class FeatureExplanation(torch.nn.Module):
             self.STOODXPostprocessor.oodTest(example.unsqueeze(0)).squeeze(0), dim=0
         )
 
-        cc = ChannelConcept()
         example.requires_grad = True
 
         composite = EpsilonPlusFlat([SequentialMergeBatchNorm()])
