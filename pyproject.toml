@@ -54,7 +54,30 @@ dev = [
     "tensorboard>=2.18.0",
     "torchsummary>=1.5.1",
     "wget>=3.2",
+    "ruff>=0.6",
 ]
+
+[tool.ruff]
+line-length = 120
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I"]
+# E501 is absorbed by line-length=120 + `ruff format`; remaining long lines are
+# LaTeX math / ML idioms that cannot wrap without breaking meaning.
+ignore = ["E501"]
+
+[tool.ruff.lint.per-file-ignores]
+# These test modules are OpenOOD eval-harness scripts (NOT run in hermetic CI).
+# They import networks (ResNet50/ViT_B_16/Swin_T/RegNet_Y_16GF/ResNet18_32x32),
+# torchvision, pandas, json, and crp.* as registration/fixture imports that may
+# take effect at import time or be referenced by the broader harness. They are
+# intentionally preserved — suppressed, never deleted (spec: surgical policy).
+"tests/_openood_adapter/test_postProcessor_cifar10.py" = ["F401"]
+"tests/_openood_adapter/test_postProcessor_cifar100.py" = ["F401"]
+"tests/_openood_adapter/test_postProcessor_imagenet.py" = ["F401"]
+"tests/_openood_adapter/test_postProcessor_imagenet200.py" = ["F401"]
+"tests/test_feature_visualization.py" = ["F401"]
 
 [tool.uv.sources]
 openood = { git = "https://github.com/Jingkang50/OpenOOD", rev = "3c35632ee91b54b09d1f085d04f94744cece7d0b" }
