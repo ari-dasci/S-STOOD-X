@@ -154,7 +154,7 @@ Or, to pin it persistently in a local (uncommitted) `pyproject.toml`:
   plus the standalone-core invariant (`import STOODX` pulls no `openood`).
 
 - **STOOD-X core is standalone.** `import STOODX` (the public 3-symbol API
-  `STOODX`, `FeatureExtractor`, `FeatureExplanation`) does not import
+  `STOODXDetector`, `FeatureExtractor`, `FeatureExplanation`) does not import
   `openood`; the OpenOOD adapter lives under the private
   `_openood_adapter` package and is only loaded on demand. This is asserted by
   the test suite (`'openood' not in sys.modules`).
@@ -165,7 +165,7 @@ Or, to pin it persistently in a local (uncommitted) `pyproject.toml`:
 
 ```python
 import torch
-from STOODX import STOODX, FeatureExtractor
+from STOODX import STOODXDetector, FeatureExtractor
 
 # Initialize your model and feature extractor
 model = FeatureExtractor(
@@ -176,7 +176,7 @@ model = FeatureExtractor(
 )
 
 # Create STOOD-X detector
-detector = STOODX(
+detector = STOODXDetector(
     model=model,
     k_neighbors=500,    # Number of neighbors for comparison
     k_NNs=50,           # Number of nearest neighbors
@@ -210,7 +210,7 @@ print(f"Mean p-value: {result['p_value'].mean():.4f}")
 S-STOOD-X/
 ├── src/
 │   └── STOODX/                   # Core library
-│       ├── __init__.py           # Public API: STOODX, FeatureExtractor, FeatureExplanation
+│       ├── __init__.py           # Public API: STOODXDetector, FeatureExtractor, FeatureExplanation
 │       ├── stoodx.py             # Main STOOD-X implementation
 │       ├── feature_extractor.py  # Feature extraction (FeatureExtractor)
 │       ├── feature_visualization.py  # Visualization and explainability

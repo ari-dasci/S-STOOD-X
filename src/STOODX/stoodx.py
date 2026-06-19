@@ -6,7 +6,7 @@ from scipy import stats
 import numpy as np
 
 
-class STOODX:
+class STOODXDetector:
     '''
     class for OOD Test detector. 
 
