@@ -101,21 +101,63 @@ Or, to pin it persistently in a local (uncommitted) `pyproject.toml`:
 
 ### Known limitations
 
-- **`pytest` collection currently fails on 5 modules.** Running
-  `uv run pytest --collect-only` raises collection errors for
-  `tests/test_feature_visualization.py`,
-  `tests/_openood_adapter/test_postProcessor_cifar10.py`,
-  `tests/_openood_adapter/test_postProcessor_cifar100.py`,
-  `tests/_openood_adapter/test_postProcessor_imagenet.py`, and
-  `tests/_openood_adapter/test_postProcessor_imagenet200.py`.
-  Root cause: `imgaug` (pulled in transitively by the pinned `openood`
-  dependency through its `draem_preprocessor`) uses `numpy.sctypes`, which was
-  removed in NumPy 2.0. STOOD-X pins `numpy>=2.1.2`, and `imgaug` is
-  unmaintained (last release in 2021), so no NumPy-2-compatible release of
-  `imgaug` exists. This is a latent conflict that predates the uv migration and
-  is now made explicit by the locked environment. Resolution is tracked for a
-  follow-up change. Environment-level imports (`uv run python -c "import STOODX"`)
-  and the rest of the collection succeed.
+- **`numpy.sctypes` shim for imgaug.** `imgaug` (pulled in transitively by the
+  pinned `openood` dependency through its `draem_preprocessor`) uses
+  `numpy.sctypes`, which was removed in NumPy 2.0. STOOD-X pins
+  `numpy>=2.1.2`, and `imgaug` is unmaintained (last release in 2021,
+  [imgaug issue #595](https://github.com/aleju/imgaug/issues/595)), so no
+  NumPy-2-compatible release exists. To keep the full test suite collecting
+  cleanly under NumPy 2, the root `conftest.py` re-adds `np.sctypes` with a
+  `hasattr` guard (no-op on NumPy <2). This is test infrastructure only; the
+  long-term fix is an OpenOOD fork (out of scope here). No numpy downgrade and
+  no OpenOOD pin change were applied.
+
+- **Undeclared OpenOOD runtime dependencies.** The pinned `openood` (rev
+  `3c35632`) does not declare several third-party packages it imports
+  unconditionally at top level (upstream packaging bug). This caused a chain
+  of masked `ModuleNotFoundError` failures during `pytest --collect-only`.
+  STOOD-X declares the affected packages directly so the full test suite
+  collects cleanly:
+
+  - **`timm`** — imported by `openood.attacks.misc`; not in OpenOOD metadata.
+    Added as a direct STOOD-X dependency.
+  - **`foolbox`** — imported eagerly by
+    `openood.evaluation_api.attackdataset` (reached via `Evaluator`); not in
+    OpenOOD metadata. Added as a direct STOOD-X dependency.
+  - **`statsmodels`**, **`libmr`** — imported by OpenOOD postprocessors
+    (`odin`, `openmax`, `adaptive scaling`) but undeclared in its metadata;
+    both are already declared by STOOD-X directly for its own statistics, so
+    they are satisfied transitively.
+
+  An exhaustive audit of every top-level import across the OpenOOD package
+  confirmed two further undeclared-but-harmless imports that are **not** added
+  as dependencies because they cannot break collection:
+  - `clip` (OpenAI CLIP) — imported by `openood.networks.clip`, but the import
+    in `openood.networks.__init__` is wrapped in
+    `try/except ModuleNotFoundError: pass`, so it is silently skipped when
+    absent.
+  - `mmcls` / `mmcv` (OpenMMLab) — imported only by `openood.networks.net_utils_`,
+    a legacy module referenced solely by a commented-out line in
+    `openood.networks.__init__` and therefore never on the import path.
+
+  The correct long-term fix is for OpenOOD to declare these in its own
+  metadata; until then STOOD-X carries `timm` and `foolbox` as direct deps.
+  OpenOOD pin was not changed.
+
+- **Full `eval_ood` runs are a manual prerequisite.** Reproducing the paper's
+  AUROC numbers through OpenOOD's `eval_ood` requires pretrained models, the
+  benchmark datasets, and (for non-trivial scale) a CUDA GPU. Those are not
+  provisioned by `uv sync`, so `eval_ood` is intentionally **out of the
+  automated test gate**. The automated test suite verifies the structural
+  OpenOOD-extension contract (`STOODXPostprocessor` is a `BasePostprocessor`
+  exposing the four contract methods and config attributes, with no data/GPU)
+  plus the standalone-core invariant (`import STOODX` pulls no `openood`).
+
+- **STOOD-X core is standalone.** `import STOODX` (the public 3-symbol API
+  `STOODX`, `FeatureExtractor`, `FeatureExplanation`) does not import
+  `openood`; the OpenOOD adapter lives under the private
+  `_openood_adapter` package and is only loaded on demand. This is asserted by
+  the test suite (`'openood' not in sys.modules`).
 
 ## Quick Start
 
@@ -168,7 +210,7 @@ print(f"Mean p-value: {result['p_value'].mean():.4f}")
 S-STOOD-X/
 ├── src/
 │   └── STOODX/                   # Core library
-│       ├── __init__.py           # Public API: STOODX, FeatureExtractor
+│       ├── __init__.py           # Public API: STOODX, FeatureExtractor, FeatureExplanation
 │       ├── stoodx.py             # Main STOOD-X implementation
 │       ├── feature_extractor.py  # Feature extraction (FeatureExtractor)
 │       ├── feature_visualization.py  # Visualization and explainability

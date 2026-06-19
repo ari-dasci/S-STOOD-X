@@ -36,7 +36,9 @@ dependencies = [
         "statsmodels",
         "libmr",
         "openood",
-    ]
+        "timm>=0.9",
+        "foolbox>=3.3",
+]
 
 [dependency-groups]
 dev = [

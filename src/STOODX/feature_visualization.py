@@ -1,10 +1,17 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 import torch
 from zennit.composites import EpsilonPlusFlat
 from zennit.canonizers import SequentialMergeBatchNorm
 from crp.attribution import CondAttribution
 from crp.concepts import ChannelConcept
 
-from ._openood_adapter.postprocessor import STOODXPostprocessor
+if TYPE_CHECKING:
+    from ._openood_adapter.postprocessor import STOODXPostprocessor
+
+
 class FeatureExplanation(torch.nn.Module):
 
     def __init__(self, net: torch.nn.Module, stoodx_postprocessor: STOODXPostprocessor, dataset):
