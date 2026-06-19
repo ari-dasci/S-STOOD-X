@@ -55,25 +55,24 @@ The system MUST allow importing the top-level package in the uv-managed environm
 
 ### Requirement: Test suite collects without import errors
 
-The system MUST allow pytest to collect the full test suite without environment-induced import
-errors. Test **execution** (running collected tests) is out of scope here — only collection.
+The system MUST allow pytest to collect the full test suite — all 7 modules — without
+environment-induced import errors. Collection is achieved via two complementary mechanisms:
+(1) a root `conftest.py` that re-adds `numpy.sctypes` (removed in NumPy 2.0) before any openood
+import, restoring `imgaug` compatibility; and (2) explicit addition of `timm>=0.9` and
+`foolbox>=3.3` as STOOD-X dependencies, which are eagerly imported by the pinned OpenOOD
+(`openood.attacks.misc` → timm, `openood.evaluation_api.attackdataset` → foolbox) but
+undeclared in OpenOOD's own metadata (upstream packaging bug). Test **execution** (running
+collected tests) remains out of scope — only collection.
+(Previously DEFERRED in C1 due to the imgaug/numpy2 conflict; RESOLVED in C3 via the conftest
+shim + timm/foolbox dep additions.)
 
-> **DEFERRED — accepted as a known limitation in C1** (author decision, 2026-06-18).
-> `uv run pytest --collect-only` currently raises collection errors on 5 modules
-> (`test_featureVisualization`, `test_postProcessor_cifar10`, `test_postProcessor_cifar100`,
-> `test_postProcessor_imagenet`, `test_postProcessor_imagenet200`). Root cause: `imgaug`
-> (transitive via the pinned `openood` dependency's `draem_preprocessor`) uses `numpy.sctypes`,
-> removed in NumPy 2.0; `imgaug` is unmaintained and STOOD-X pins `numpy>=2.1.2`. This latent
-> conflict predates the uv migration and is surfaced explicitly by the lock. The requirement is
-> retained verbatim below; it is NOT satisfied by C1 and MUST be re-evaluated in a follow-up
-> change (C2/C3). See the "Known limitations" section of `README.md` for the user-facing note.
-> C1's accepted scope is environment reproducibility + top-level importability only.
+#### Scenario: pytest collection succeeds across all 7 modules
 
-#### Scenario: pytest collection succeeds
-
-- GIVEN `uv sync` has completed successfully
+- GIVEN `uv sync` has completed successfully AND the root `conftest.py` shim is present AND
+  `timm`/`foolbox` are installed
 - WHEN `uv run pytest --collect-only` is run from the repository root
-- THEN pytest collects the suite with no collection/import errors
+- THEN pytest collects ALL 7 test modules with no collection/import errors
+- AND the 5 previously-failing OpenOOD-pulling modules now collect
 - AND the outcome reflects collection only, not test pass/fail
 
 ### Requirement: Reproducibility artifacts committed

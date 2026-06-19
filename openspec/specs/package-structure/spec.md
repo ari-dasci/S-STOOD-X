@@ -51,23 +51,47 @@ the typo `feature_estractor` MUST NOT appear in `src/`, `tests/`, or `README.md`
 
 ### Requirement: Public API surface and no openood pull-in
 
-`__init__.py` MUST export exactly `STOODX` and `FeatureExtractor` via `__all__`; it MUST NOT
-export `FeatureExplanation` or `STOODXPostprocessor` at top level. Importing `STOODX` MUST NOT
-transitively import `openood` — this PRESERVES env R2 and MUST NOT regress it.
+`__init__.py` MUST export exactly `STOODX`, `FeatureExtractor`, and `FeatureExplanation` via
+`__all__`; it MUST NOT export `STOODXPostprocessor` at top level. Importing `STOODX` MUST NOT
+transitively import `openood` — this PRESERVES env R2 and MUST NOT regress it WITH all three
+exported symbols present.
 
-#### Scenario: two-symbol public API
+#### Scenario: three-symbol public API
 
 - GIVEN the change is applied
-- WHEN `uv run python -c "from STOODX import STOODX, FeatureExtractor"` runs
+- WHEN `uv run python -c "from STOODX import STOODX, FeatureExtractor, FeatureExplanation"` runs
 - THEN it succeeds without `ImportError`
-- AND `STOODX.__all__ == ["STOODX", "FeatureExtractor"]`
+- AND `STOODX.__all__ == ["STOODX", "FeatureExtractor", "FeatureExplanation"]`
+- AND `STOODXPostprocessor` is absent from `STOODX.__all__`
 
-#### Scenario: top-level import does not pull openood
+#### Scenario: top-level import does not pull openood (3 symbols)
 
 - GIVEN the change is applied
-- WHEN `uv run python -c "import STOODX; import sys; assert 'openood' not in sys.modules"`
+- WHEN `uv run python -c "import STOODX; from STOODX import FeatureExplanation; import sys; assert 'openood' not in sys.modules"`
 - THEN the assertion passes
-- AND `FeatureExplanation` and `STOODXPostprocessor` are absent from `STOODX.__all__`
+- AND `openood` is absent from `sys.modules` WITH all three exported symbols imported
+
+### Requirement: feature_visualization is decoupled from the adapter
+
+`src/STOODX/feature_visualization.py` MUST import `STOODXPostprocessor` ONLY under
+`typing.TYPE_CHECKING` (paired with `from __future__ import annotations`), so that importing
+`FeatureExplanation` MUST NOT eagerly import the adapter and MUST NOT pull `openood` into
+`sys.modules`. This REMOVES the import edge that C2's scope boundary explicitly preserved as a
+non-goal.
+
+#### Scenario: importing FeatureExplanation does not pull openood
+
+- GIVEN the change is applied
+- WHEN `uv run python -c "from STOODX.feature_visualization import FeatureExplanation; import sys; assert 'openood' not in sys.modules"`
+- THEN the assertion passes
+- AND `STOODX._openood_adapter.postprocessor` is NOT loaded as a side effect
+
+#### Scenario: adapter type annotation stays resolvable statically
+
+- GIVEN `feature_visualization.py` guards the adapter import with `if TYPE_CHECKING:`
+- WHEN a static type-checker resolves the adapter annotation
+- THEN the annotation resolves to `STOODXPostprocessor` at analysis time
+- AND runtime import of `feature_visualization` does not trigger the adapter's module load
 
 ### Requirement: OpenOOD adapter privatization
 
@@ -96,16 +120,15 @@ No residual old module path, old class name, or typo MUST remain in source, test
 ### Requirement: Import correctness preserved
 
 pytest collection MUST collect `test_feature_extractor.py` with no import errors from this
-change. The 5 OpenOOD-pulling modules MAY still fail collection on the DEFERRED imgaug/numpy2
-issue (env R3, same root cause as C1), but NOT on new import typos.
+change. All 7 test modules MUST collect (env R3 resolved in C3 via conftest shim + timm/foolbox
+deps; the imgaug/numpy2 DEFERRED item is now CLOSED).
 
-#### Scenario: rename-correct collection
+#### Scenario: full collection succeeds
 
 - GIVEN the change is applied and `uv sync` succeeded
 - WHEN `uv run pytest --collect-only` runs
-- THEN `test_feature_extractor.py` is collected without `ImportError`
-- AND any errors on the 5 OpenOOD-pulling modules cite imgaug/numpy2, not
-  `FeatureStractor`/`feature_estractor`/missing-module typos
+- THEN ALL 7 test modules collect without `ImportError` or `ModuleNotFoundError`
+- AND collection count is 314+ tests with zero errors
 
 ### Requirement: README accuracy
 
@@ -120,13 +143,14 @@ project-structure tree MUST reflect `src/STOODX/` paths.
 
 ### Requirement: Scope boundary (non-goals)
 
-This change SHALL NOT alter statistics, numerics, or XAI algorithm logic. It SHALL NOT decouple
-`feature_visualization` from the OpenOOD adapter, fix the imgaug/numpy2 collection issue (C3),
-switch the build backend, or add linter/type-checker/CI configuration.
+This change SHALL NOT alter statistics, numerics, or XAI algorithm logic. It SHALL NOT switch
+the build backend or add linter/type-checker/CI configuration. (Note: `feature_visualization`
+decoupling and `FeatureExplanation` promotion were completed in C3; the imgaug/numpy2 collection
+fix was completed in C3.)
 
 #### Scenario: only structural changes
 
 - GIVEN the change diff
 - THEN no statistics/numerics/XAI function body is modified
-- AND the `feature_visualization -> _openood_adapter.postprocessor` import edge is preserved
+- AND `feature_visualization` imports the adapter ONLY under `TYPE_CHECKING` (decoupled)
 - AND setuptools remains the build backend with no new linter/CI config
