@@ -218,17 +218,21 @@ S-STOOD-X/
 │           └── postprocessor.py  # STOODXPostprocessor for OpenOOD integration
 ├── configs/                     # Configuration files
 │   └── postprocessors/         # Post-processor configs
-├── data/                        # Data and benchmark lists
+├── data/                        # (local only, gitignored: benchmark data)
 ├── tests/                       # Unit tests
+│   ├── test_public_api.py
 │   ├── test_feature_extractor.py
 │   ├── test_feature_visualization.py
 │   └── _openood_adapter/        # OpenOOD-adapter integration tests
-├── results/                     # Experimental results
-├── pretrained_models/           # Pretrained model storage
+├── results/                     # (local only, gitignored: experimental results)
+├── pretrained_models/           # (local only, gitignored: checkpoints)
 ├── README.md                    # This file
 ├── pyproject.toml              # Package configuration
 └── LICENSE                      # GPL v3 License
 ```
+
+Directories marked *local only* are created by the pipeline at run time and are
+listed in `.gitignore`; a fresh clone does not contain them.
 
 ## Development
 
@@ -331,7 +335,7 @@ University of Granada, Spain
 
 - [OpenOOD](https://github.com/Jingkang50/OpenOOD) - Benchmark for OOD detection
 - [Zennit](https://github.com/chr5tphr/zennit) - Attribution framework used for explainability
-- [ReVel](https://github.com/pmichel31415/revel) - Relevance visualization library
+- [ReVel](https://github.com/ari-dasci/S-ReVel) - The authors' framework to measure local linear explanations of black-box models
 
 ## Contact
 
