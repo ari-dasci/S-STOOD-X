@@ -1,0 +1,39 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite the article below."
+title: "STOOD-X"
+abstract: "Official implementation of STOOD-X: explainable out-of-distribution detection via nonparametric statistical testing on large-scale datasets."
+type: software
+license: GPL-3.0
+repository-code: "https://github.com/ari-dasci/S-STOOD-X"
+keywords:
+  - explainable artificial intelligence
+  - out-of-distribution detection
+  - nonparametric statistical testing
+  - reliability
+authors:
+  - family-names: Sevillano-García
+    given-names: Iván
+    orcid: "https://orcid.org/0000-0002-5029-9106"
+    affiliation: "Andalusian Research Institute in Data Science and Computational Intelligence (DaSCI), University of Granada, Spain"
+  - family-names: Luengo
+    given-names: Julián
+    affiliation: "Andalusian Research Institute in Data Science and Computational Intelligence (DaSCI), University of Granada, Spain"
+  - family-names: Herrera
+    given-names: Francisco
+    affiliation: "Andalusian Research Institute in Data Science and Computational Intelligence (DaSCI), University of Granada, Spain"
+preferred-citation:
+  type: article
+  title: "STOOD-X: Explainable out-of-distribution detection via nonparametric statistical testing on large-scale datasets"
+  authors:
+    - family-names: Sevillano-García
+      given-names: Iván
+      orcid: "https://orcid.org/0000-0002-5029-9106"
+    - family-names: Luengo
+      given-names: Julián
+    - family-names: Herrera
+      given-names: Francisco
+  journal: "Pattern Recognition"
+  volume: 177
+  article-number: "113254"
+  year: 2026
+  doi: "10.1016/j.patcog.2026.113254"
