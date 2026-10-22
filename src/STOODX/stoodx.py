@@ -183,8 +183,8 @@ class STOODXDetector:
         Parameters
         ----------
         x : torch.Tensor
-            The input tensor to test. Shape must be (B,...), where B is the batch size and
-            ... is the shape of the input accepted by the model.
+            The input tensor to test. Shape must be (C, H, W), or (1, C, H, W): one sample at
+            a time. A batch of more than one sample raises ValueError.
         n_features : int, optional
             The number of features to use for the test. If not provided, all features will be used.
             The features used will be the ones with the most presence in the features set considered.
@@ -208,8 +208,16 @@ class STOODXDetector:
 
         """
 
-        x_features = self.features(x.unsqueeze(0)).squeeze(0).detach().flatten()
-        x_class = torch.argmax(self.model(x.unsqueeze(0)).squeeze(0), dim=0)
+        if x.dim() == 3:
+            x = x.unsqueeze(0)
+        if x.shape[0] != 1:
+            raise ValueError(
+                f"test() evaluates one sample at a time; got a batch of {x.shape[0]}. "
+                "Pass a single (C, H, W) sample, or a (1, C, H, W) batch of one."
+            )
+
+        x_features = self.features(x).reshape(x.shape[0], -1).detach().flatten()
+        x_class = torch.argmax(self.model(x), dim=1)
 
         if intraclass:
             feat_subset = self.feats[self.classes == x_class]

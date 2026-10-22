@@ -3,6 +3,14 @@ from crp.attribution import CondAttribution
 from zennit.composites import Composite
 
 
+class _BatchAttribution:
+    """Attributions for a batch, concatenated along the batch dimension."""
+
+    def __init__(self, activations: dict, relevances: dict):
+        self.activations = activations
+        self.relevances = relevances
+
+
 class FeatureExtractor(torch.nn.Module):
     """
     Class for Feature Extraction
@@ -40,6 +48,27 @@ class FeatureExtractor(torch.nn.Module):
         self.relative = relative
 
     def _atribution_calc(self, x: torch.Tensor):
+        x = x.to(self.device)
+        if x.dim() == 3:
+            x = x.unsqueeze(0)
+
+        if x.shape[0] == 1:
+            return self._atribution_calc_single(x)
+
+        # Relevance propagation resolves one target class per call, so a batch is attributed
+        # sample by sample and the results are concatenated along the batch dimension.
+        activations, relevances = [], []
+        for index in range(x.shape[0]):
+            attribution = self._atribution_calc_single(x[index : index + 1])
+            activations.append(attribution.activations)
+            relevances.append(attribution.relevances)
+
+        return _BatchAttribution(
+            {name: torch.cat([item[name] for item in activations], dim=0) for name in activations[0]},
+            {name: torch.cat([item[name] for item in relevances], dim=0) for name in relevances[0]},
+        )
+
+    def _atribution_calc_single(self, x: torch.Tensor):
         _x = x.to(self.device)
         _x.requires_grad = True
         x_class = self.model(_x)
