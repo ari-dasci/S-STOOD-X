@@ -89,7 +89,7 @@ class STOODXDetector:
         -------
         None
         """
-        feats = self.model.features(x).squeeze()
+        feats = self.model.features(x).reshape(x.shape[0], -1)
         classes = self.forward(x).argmax(1).detach()
         self.feats_list.append(feats)
         self.classes_list.append(classes)

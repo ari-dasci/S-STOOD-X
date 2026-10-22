@@ -204,6 +204,28 @@ result = detector.test(test_sample)
 print(f"Mean p-value: {result['p_value'].mean():.4f}")
 ```
 
+## How the pieces fit together
+
+Two conventions are easy to get wrong, and both are enforced by the code rather than by the
+type hints:
+
+- **`feature_name` must name a module whose output is already globally pooled**, because
+  `addFeatures` stores one vector per sample. For a ResNet that is `avgpool`; a spatial map
+  such as `layer4` leaves a `(C, H, W)` tensor and breaks the distance computation.
+- **`addFeatures` and `test` take different shapes.** `addFeatures` expects a batch,
+  `(1, C, H, W)`, and handles one sample at a time. `test` calls `x.unsqueeze(0)` internally,
+  so it expects an unbatched `(C, H, W)`.
+
+A script you can run in one command, with no dataset and no download, is in
+[`examples/quickstart.py`](examples/quickstart.py):
+
+```bash
+python examples/quickstart.py
+```
+
+It builds a torchvision ResNet-18 with random weights, feeds 32 synthetic validation
+samples, and prints the per-neighbour p-values of one synthetic test sample.
+
 ## Project Structure
 
 ```
