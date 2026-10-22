@@ -212,9 +212,9 @@ type hints:
 - **`feature_name` must name a module whose output is already globally pooled**, because
   `addFeatures` stores one vector per sample. For a ResNet that is `avgpool`; a spatial map
   such as `layer4` leaves a `(C, H, W)` tensor and breaks the distance computation.
-- **`addFeatures` and `test` take different shapes.** `addFeatures` expects a batch,
-  `(1, C, H, W)`, and handles one sample at a time. `test` calls `x.unsqueeze(0)` internally,
-  so it expects an unbatched `(C, H, W)`.
+- **`addFeatures` takes a batch; `test` takes one sample.** `addFeatures` accepts
+  `(B, C, H, W)` and attributes each sample in turn. `test` accepts `(C, H, W)` or
+  `(1, C, H, W)`, and rejects a batch of more than one with a `ValueError`.
 
 A script you can run in one command, with no dataset and no download, is in
 [`examples/quickstart.py`](examples/quickstart.py):
